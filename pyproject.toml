@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "voice-to-text"
+version = "0.0.1"
+description = "Hlasovy prepis s AI koreci - systray applet pro Linux (PySide6)"
+requires-python = ">=3.11"
+dependencies = [
+    "groq",
+    "PySide6",
+    "pynput",
+]
+
+[project.scripts]
+voice-to-text = "voice_to_text.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["."]

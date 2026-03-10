@@ -42,8 +42,10 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 
 ### Python dependencies
 
+Testted on Python 3.11.
+
 ```bash
-pip install groq numpy scipy PySide6 pynput
+pip install groq PySide6 pynput
 # or, if you have pyproject.toml:
 pip install -e .
 ```

@@ -45,8 +45,10 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 
 ### Python závislosti
 
+Testováno na Python 3.11.
+
 ```bash
-pip install groq numpy scipy PySide6 pynput
+pip install groq PySide6 pynput
 # nebo přes pyproject.toml:
 pip install -e .
 ```

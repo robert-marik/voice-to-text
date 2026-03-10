@@ -48,8 +48,8 @@ class SettingsDialog(QDialog):
         form.addRow("Jazyk:", self._lang_combo)
 
         self._rate_combo = QComboBox()
-        self._rate_combo.addItem("16 kHz – rychlejší", 16000)
-        self._rate_combo.addItem("44.1 kHz – věrnější", 44100)
+        self._rate_combo.addItem("16 kHz (rychlejší)", 16000)
+        self._rate_combo.addItem("44.1 kHz (věrnější)", 44100)
         idx = self._rate_combo.findData(self._settings.sample_rate)
         self._rate_combo.setCurrentIndex(max(idx, 0))
         form.addRow("Vzorkovací frekvence:", self._rate_combo)

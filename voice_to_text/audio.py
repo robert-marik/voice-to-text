@@ -27,10 +27,11 @@ class AudioRecorder:
         # Neblokující přehrávání – nezdržuje start nahrávání
         subprocess.Popen(
             ["aplay", "-q", str(WAV_DIR / "sound" / "start.wav")],
+            stdin=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
         cmd = ["arecord", "-f", "S16_LE", "-r", str(self.sample_rate), "-c", "1", self.audio_path]
-        self._process = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self._process = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         self.is_recording = True
         self.logger.log(f"Externí nahrávání spuštěno (PID: {self._process.pid})")
 
@@ -58,6 +59,7 @@ class AudioRecorder:
         # Neblokující přehrávání stop zvuku
         subprocess.Popen(
             ["aplay", "-q", str(WAV_DIR / "sound" / "stop.wav")],
+            stdin=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
         self.logger.log("Nahrávání ukončeno.")
@@ -76,6 +78,7 @@ class AudioRecorder:
                 "-ar", "16000", "-c:a", "libopus", "-b:a", "32k",
                 self.normalized_path,
             ],
+            stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )

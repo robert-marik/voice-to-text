@@ -18,6 +18,6 @@ class ClipboardPaster:
             process.communicate(input=text.encode("utf-8"))
             time.sleep(0.25)
             self.logger.log("Vkládám text do aktivního okna...")
-            subprocess.run(["xdotool", "key", "ctrl+v"])
+            subprocess.run(["xdotool", "key", "ctrl+v"], stdin=subprocess.DEVNULL)
         except Exception as e:
             self.logger.log(f"CHYBA při vkládání: {e}")

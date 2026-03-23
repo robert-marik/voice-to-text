@@ -34,5 +34,5 @@ class Logger:
         """Otevře log soubor v systémovém editoru."""
         import subprocess
         if os.path.exists(self.log_path):
-            subprocess.run(["xdg-open", self.log_path])
+            subprocess.run(["xdg-open", self.log_path], stdin=subprocess.DEVNULL)
 

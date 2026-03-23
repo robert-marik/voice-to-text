@@ -15,13 +15,14 @@ class MusicController:
             self.logger.log("Testuji, jestli hraje hudba...")
             result = subprocess.run(
                 ["playerctl", "status"],
+                stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.DEVNULL,
                 text=True,
             )
             if result.stdout.strip() == "Playing":
                 self.logger.log("Pozastavuji hudbu...")
-                subprocess.run(["playerctl", "pause"], stderr=subprocess.DEVNULL)
+                subprocess.run(["playerctl", "pause"], stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 return True
             self.logger.log("Hudba nehrála, není třeba pozastavovat.")
             return False
@@ -33,6 +34,6 @@ class MusicController:
         """Spustí přehrávač."""
         try:
             self.logger.log("Spouštím hudbu...")
-            subprocess.run(["playerctl", "play"], stderr=subprocess.DEVNULL)
+            subprocess.run(["playerctl", "play"], stdin=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         except Exception as e:
             self.logger.log(f"Chyba při spouštění hudby: {e}")

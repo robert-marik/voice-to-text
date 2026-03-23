@@ -72,6 +72,7 @@ class AppController(QObject):
 
         from .gui.main_window import MainWindow
         self._window = MainWindow(self.history, self.settings)
+        self._state_sig.connect(self._update_tray_icon)
         self._state_sig.connect(self._window.state_changed)
         self._notify_sig.connect(self._show_notification)
 
@@ -125,8 +126,13 @@ class AppController(QObject):
     # ── Stav ikony ─────────────────────────────────────────────────────
 
     def _set_state(self, state: str) -> None:
-        self._tray.setIcon(self._icons.get(state, self._icons["idle"]))
         self._state_sig.emit(state)
+
+    # ── Tray icon update (main-thread slot) ────────────────────────────
+
+    @Slot(str)
+    def _update_tray_icon(self, state: str) -> None:
+        self._tray.setIcon(self._icons.get(state, self._icons["idle"]))
 
     # ── Tray notifikace ────────────────────────────────────────────────
 

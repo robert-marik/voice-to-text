@@ -28,10 +28,12 @@ class AudioRecorder:
         subprocess.Popen(
             ["aplay", "-q", str(WAV_DIR / "sound" / "start.wav")],
             stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            start_new_session=True,
         )
         cmd = ["arecord", "-f", "S16_LE", "-r", str(self.sample_rate), "-c", "1", self.audio_path]
-        self._process = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        self._process = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         self.is_recording = True
         self.logger.log(f"Externí nahrávání spuštěno (PID: {self._process.pid})")
 
@@ -60,7 +62,9 @@ class AudioRecorder:
         subprocess.Popen(
             ["aplay", "-q", str(WAV_DIR / "sound" / "stop.wav")],
             stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            start_new_session=True,
         )
         self.logger.log("Nahrávání ukončeno.")
 
@@ -73,7 +77,7 @@ class AudioRecorder:
         start = time.time()
         result = subprocess.run(
             [
-                "ffmpeg", "-y", "-i", self.audio_path,
+                "ffmpeg", "-nostdin", "-y", "-i", self.audio_path,
                 "-af", "loudnorm=I=-16:TP=-1.5:LRA=11",
                 "-ar", "16000", "-c:a", "libopus", "-b:a", "32k",
                 self.normalized_path,
@@ -81,6 +85,7 @@ class AudioRecorder:
             stdin=subprocess.DEVNULL,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            start_new_session=True,
         )
         self.logger.log(f"Normalizace dokončena za {time.time() - start:.2f} sekund.")
         if os.path.exists(self.audio_path) and os.path.exists(self.normalized_path):

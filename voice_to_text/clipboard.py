@@ -14,10 +14,16 @@ class ClipboardPaster:
         """Vloží text do schránky (xclip) a pak simuluje Ctrl+V (xdotool)."""
         self.logger.log(f"Vkládám: {text}")
         try:
-            process = subprocess.Popen(["xclip", "-selection", "clipboard"], stdin=subprocess.PIPE)
+            process = subprocess.Popen(
+                ["xclip", "-selection", "clipboard"],
+                stdin=subprocess.PIPE,
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+                start_new_session=True,
+            )
             process.communicate(input=text.encode("utf-8"))
             time.sleep(0.25)
             self.logger.log("Vkládám text do aktivního okna...")
-            subprocess.run(["xdotool", "key", "ctrl+v"], stdin=subprocess.DEVNULL)
+            subprocess.run(["xdotool", "key", "ctrl+v"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)
         except Exception as e:
             self.logger.log(f"CHYBA při vkládání: {e}")

@@ -14,7 +14,7 @@ REPORT_PATH = os.path.join(APP_DATA_DIR, "last_transcription.txt")
 WHISPER_MODEL = "whisper-large-v3-turbo"
 LLM_MODEL = "llama-3.3-70b-versatile"
 
-REQUIRED_SYSTEM_TOOLS = ["aplay", "arecord", "ffmpeg", "xclip", "xdotool", "playerctl"]
+REQUIRED_SYSTEM_TOOLS = ["aplay", "arecord", "ffmpeg", "xclip", "xdotool", "xprop", "playerctl"]
 
 ICON_SIZE = (64, 64)
 ICON_COLORS = {

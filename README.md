@@ -90,8 +90,17 @@ python main.py
 |---|---|
 | **2× Ctrl** | Zahájí nahrávání |
 | **2× Ctrl** znovu | Ukončí nahrávání a spustí přepis |
+| **2× Ctrl, druhý stisk podržet** | Nahrává během držení, po puštění spustí hlasový příkaz |
 | **Levý klik na ikonu** | Otevře okno s historií |
 | **Pravý klik na ikonu** | Kontextové menu |
+
+Hlasové příkazy se definují v *Nastavení → Příkazy*, jeden řádek = `fráze = shell příkaz`
+(např. `otevři kalkulačku = gnome-calculator`). Prefix `>` příkaz jen vypíše do aktivního
+terminálu (není-li aktivní, otevře nový terminator) a čeká na Enter (`stav gitu = > git status`), prefix `@` ho spustí v novém okně
+`terminator`, které po skončení zůstane otevřené (`aktualizuj = @ sudo apt upgrade`). Prefix `!` stiskne
+klávesovou zkratku v syntaxi `xdotool` (`terminál = ! ctrl+grave`) – hodí se pro zkratky,
+které na české klávesnici nejdou zmáčknout. Přepis se fuzzy porovná s frázemi
+a spustí se příkaz nejpodobnější fráze; bez shody se jen zobrazí notifikace.
 
 Po zastavení nahrávání aplikace:
 1. Normalizuje hlasitost audia přes `ffmpeg`

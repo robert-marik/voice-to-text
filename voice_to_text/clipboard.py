@@ -35,10 +35,14 @@ class ClipboardPaster:
         process.communicate(input=data)
 
     @staticmethod
-    def _paste_key() -> str:
-        """Terminály vkládají přes Ctrl+Shift+V, ostatní okna přes Ctrl+V."""
+    def is_terminal_active() -> bool:
+        """Je aktivní okno terminál (podle WM_CLASS)?"""
         win = subprocess.run(["xdotool", "getactivewindow"], capture_output=True, text=True,
                              stdin=subprocess.DEVNULL).stdout.strip()
         wm_class = subprocess.run(["xprop", "-id", win, "WM_CLASS"], capture_output=True, text=True,
                                   stdin=subprocess.DEVNULL).stdout.lower() if win else ""
-        return "ctrl+shift+v" if any(t in wm_class for t in TERMINALS) else "ctrl+v"
+        return any(t in wm_class for t in TERMINALS)
+
+    def _paste_key(self) -> str:
+        """Terminály vkládají přes Ctrl+Shift+V, ostatní okna přes Ctrl+V."""
+        return "ctrl+shift+v" if self.is_terminal_active() else "ctrl+v"

@@ -30,6 +30,8 @@ class Settings:
     custom_correction_prompts: Dict[str, str] = field(default_factory=dict)
     # Vlastní prompty pro překlad, klíč = kód cílového jazyka (např. "en", "de").
     custom_translation_prompts: Dict[str, str] = field(default_factory=dict)
+    # Hlasové příkazy: fráze → shell příkaz (2× Ctrl + držet).
+    voice_commands: Dict[str, str] = field(default_factory=dict)
 
     # ------------------------------------------------------------------ #
 

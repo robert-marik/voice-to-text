@@ -87,8 +87,17 @@ python main.py
 | ------------------------- | ----------------------------- |
 | **2× Ctrl**               | Start recording               |
 | **2× Ctrl** again         | Stop recording and transcribe |
+| **2× Ctrl, hold 2nd press** | Record while held, run a voice command on release |
 | **Left-click tray icon**  | Open history window           |
 | **Right-click tray icon** | Context menu                  |
+
+Voice commands are defined in *Settings → Příkazy*, one line = `phrase = shell command`
+(e.g. `open calculator = gnome-calculator`). Prefix `>` only types the command into the active
+terminal (or a new terminator window if none is active) and waits for Enter (`git status = > git status`), prefix `@` runs it in a new
+`terminator` window that stays open afterwards (`upgrade = @ sudo apt upgrade`). Prefix `!` presses a keyboard
+shortcut in `xdotool` syntax (`terminal = ! ctrl+grave`) – handy for shortcuts that can't be
+typed on some layouts. The transcript is fuzzy-matched against the
+phrases and the closest one's command runs; with no match only a notification is shown.
 
 After the recording stops, the app:
 1. Normalizes audio volume via `ffmpeg` and converts to Opus format which is

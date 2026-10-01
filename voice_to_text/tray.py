@@ -14,7 +14,8 @@ from pynput import keyboard as kb
 
 from .audio import AudioRecorder
 from .clipboard import ClipboardPaster
-from .config import APP_DATA_DIR
+from .commands import match_command, prefill_in_terminal, run_command
+from .config import APP_DATA_DIR, HOLD_SECONDS
 from .history import TranscriptionEntry, TranscriptionHistory
 from .logger import Logger
 from .music import MusicController
@@ -62,10 +63,12 @@ class AppController(QObject):
         self.was_playing = False
         self._lock = threading.Lock()   # ochrana sdíleného stavu
         self._last_ctrl: float = 0.0
+        self._hold_start: float | None = None   # čas 2. stisku Ctrl, dokud je držen
+        self._command_mode = False
         self._recorder: AudioRecorder | None = None
 
         self._tray = QSystemTrayIcon(self._icons["idle"], self.app)
-        self._tray.setToolTip("Voice to Text  (2x Ctrl = nahrávání)")
+        self._tray.setToolTip("Voice to Text  (2x Ctrl = nahrávání, 2x Ctrl + držet = příkaz)")
         self._tray.activated.connect(self._on_tray_activated)
         self._build_tray_menu()
         self._tray.show()
@@ -76,11 +79,11 @@ class AppController(QObject):
         self._state_sig.connect(self._window.state_changed)
         self._notify_sig.connect(self._show_notification)
 
-        self._listener = kb.Listener(on_press=self._on_key_press)
+        self._listener = kb.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
         self._listener.daemon = True
         self._listener.start()
 
-        self.logger.log("Aplikace spustena. Stiskni 2x Ctrl pro start/stop nahravani.")
+        self.logger.log("Aplikace spustena. 2x Ctrl = start/stop nahravani, 2x Ctrl + drzet = prikaz.")
         self.logger.log(f"Max delka nahravani: {self.settings.max_recording_seconds}s.")
 
         # Upozornit uživatele, pokud chybí API klíč
@@ -156,9 +159,21 @@ class AppController(QObject):
             self._last_ctrl = now
         if diff < 0.4:
             if not self.recording:
+                self._hold_start = now
+                self._command_mode = False
                 self._start_recording()
             else:
                 self._stop_recording()
+
+    def _on_key_release(self, key) -> None:
+        """Držení 2. stisku ≥ HOLD_SECONDS = příkazový režim, stop při puštění."""
+        if key not in (kb.Key.ctrl, kb.Key.ctrl_l, kb.Key.ctrl_r) or self._hold_start is None:
+            return
+        held = time.time() - self._hold_start
+        self._hold_start = None
+        if held >= HOLD_SECONDS and self.recording:
+            self._command_mode = True
+            self._stop_recording()
 
     # ── Nahrávání ──────────────────────────────────────────────────────
 
@@ -172,6 +187,24 @@ class AppController(QObject):
         self.recording = False
         if self.was_playing:
             self.music.resume()
+
+    def _run_voice_command(self, text: str) -> str:
+        cmd = match_command(text, self.settings.voice_commands)
+        if cmd is None:
+            self.logger.log(f"Prikaz nerozpoznan: {text}")
+            self._notify("Voice to Text", f"Příkaz nerozpoznán: {text}")
+            return ""
+        self.logger.log(f"Spoustim prikaz: {cmd}")
+        self._notify("Voice to Text", f"Spouštím: {cmd}")
+        if cmd.startswith(">"):
+            # jen vypsat, Enter zmáčkne uživatel; bez aktivního terminálu otevřít nový
+            if self.paster.is_terminal_active():
+                self.paster.paste(cmd[1:].strip())
+            else:
+                prefill_in_terminal(cmd[1:].strip())
+        else:
+            run_command(cmd)
+        return cmd
 
     def _record_and_process(self) -> None:
         text_to_paste = ""
@@ -205,6 +238,10 @@ class AppController(QObject):
             if not raw_text:
                 self.logger.log("Prázdný přepis – pravděpodobně ticho nebo šum.")
                 self._notify("Voice to Text", "Přepis je prázdný – nic nebylo rozpoznáno.")
+                return
+
+            if self._command_mode:
+                text_to_paste = self._run_voice_command(raw_text)
                 return
 
             text_to_paste = raw_text

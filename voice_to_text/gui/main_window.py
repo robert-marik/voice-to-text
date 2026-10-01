@@ -42,7 +42,7 @@ STATE_COLORS = {
     "processing": "#F9A825",   # žlutá
 }
 STATE_LABELS = {
-    "idle":       "Připraven  (2× Ctrl = nahrávání)",
+    "idle":       "Připraven  (2× Ctrl = nahrávání, 2× Ctrl + držet = příkaz)",
     "recording":  "● Nahrávám…",
     "processing": "⏳ Zpracovávám…",
 }

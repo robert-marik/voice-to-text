@@ -131,6 +131,7 @@ class SettingsDialog(QDialog):
         tabs.addTab(self._build_tab_general(), "🎙  Přepis")
         tabs.addTab(self._build_tab_ai(), "🤖  AI zpracování")
         tabs.addTab(self._build_tab_prompts(), "📝  Prompty")
+        tabs.addTab(self._build_tab_commands(), "🗣  Příkazy")
         root.addWidget(tabs)
 
         buttons = QDialogButtonBox(
@@ -253,6 +254,45 @@ class SettingsDialog(QDialog):
         layout.addStretch()
         return tab
 
+    def _build_tab_commands(self) -> QWidget:
+        """Tab: Příkazy – hlasové fráze a shell příkazy (jeden řádek = fráze = příkaz)."""
+        tab = QWidget()
+        layout = QVBoxLayout(tab)
+        layout.setContentsMargins(12, 12, 12, 12)
+
+        info = QLabel(
+            "Stiskněte 2× Ctrl a druhý stisk podržte, řekněte frázi a pusťte. "
+            "Nejpodobnější fráze spustí svůj příkaz.<br>"
+            "Jeden řádek = <code>fráze = příkaz</code>, řádky začínající # se ignorují.<br>"
+            "<code>fráze = příkaz</code> – spustí na pozadí<br>"
+            "<code>fráze = &gt; příkaz</code> – jen vypíše do aktivního terminálu, jinak do nového (čeká na Enter)<br>"
+            "<code>fráze = @ příkaz</code> – spustí v novém terminálu, který zůstane otevřený<br>"
+            "<code>fráze = ! ctrl+grave</code> – stiskne klávesovou zkratku (názvy kláves podle xdotool)"
+        )
+        info.setTextFormat(Qt.TextFormat.RichText)
+        info.setWordWrap(True)
+        info.setStyleSheet("color: #555; font-size: 11px;")
+        layout.addWidget(info)
+
+        self._commands_edit = QTextEdit()
+        self._commands_edit.setAcceptRichText(False)
+        self._commands_edit.setPlaceholderText(
+            "otevři kalkulačku = gnome-calculator\nstav gitu = > git status\naktualizuj systém = @ sudo apt upgrade\nterminál = ! ctrl+grave"
+        )
+        self._commands_edit.setPlainText(
+            "\n".join(f"{k} = {v}" for k, v in self._settings.voice_commands.items())
+        )
+        layout.addWidget(self._commands_edit)
+        return tab
+
+    def _parse_commands(self) -> dict[str, str]:
+        commands = {}
+        for line in self._commands_edit.toPlainText().splitlines():
+            phrase, sep, cmd = line.partition("=")
+            if sep and not line.lstrip().startswith("#") and phrase.strip() and cmd.strip():
+                commands[phrase.strip()] = cmd.strip()
+        return commands
+
     # ------------------------------------------------------------------ #
     # Logika                                                               #
     # ------------------------------------------------------------------ #
@@ -298,6 +338,8 @@ class SettingsDialog(QDialog):
             self._settings.set_correction_prompt(lang, self._prompt_correction.get_custom_prompt())
         if self._translate_cb.isChecked():
             self._settings.set_translation_prompt(target, self._prompt_translation.get_custom_prompt())
+
+        self._settings.voice_commands = self._parse_commands()
 
         self._settings.save()
         self.accept()

@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QSpinBox,
     QTabWidget,
@@ -23,7 +24,8 @@ from PySide6.QtWidgets import (
 
 from ..config import LANGUAGES, TARGET_LANGUAGES
 from ..transcriber import _get_default_correction_prompt, _get_default_translation_prompt
-from ..settings import Settings
+from ..settings import Settings, get_api_key, set_api_key
+from keyring.errors import KeyringError
 
 
 class PromptEditor(QGroupBox):
@@ -156,8 +158,8 @@ class SettingsDialog(QDialog):
         self._api_key_edit = QLineEdit()
         self._api_key_edit.setPlaceholderText("gsk_... (nebo nastavte env GROQ_API_KEY)")
         self._api_key_edit.setEchoMode(QLineEdit.EchoMode.Password)
-        self._api_key_edit.setText(self._settings.groq_api_key)
-        api_note = QLabel("Klíč je uložen lokálně v ~/.local/state/voice_to_text/settings.json")
+        self._api_key_edit.setText(get_api_key())
+        api_note = QLabel("Klíč je uložen v systémové klíčence (GNOME Keyring / KWallet).")
         api_note.setStyleSheet("color: gray; font-size: 10px;")
         api_note.setWordWrap(True)
         api_form.addRow("API klíč:", self._api_key_edit)
@@ -326,7 +328,13 @@ class SettingsDialog(QDialog):
         lang = self._lang_combo.currentData()
         target = self._target_lang_combo.currentData()
 
-        self._settings.groq_api_key = self._api_key_edit.text().strip()
+        try:
+            set_api_key(self._api_key_edit.text().strip())
+        except KeyringError as e:
+            QMessageBox.warning(self, "Klíčenka nedostupná",
+                                f"API klíč nelze uložit do systémové klíčenky:\n{e}\n\n"
+                                "Nastavte místo toho proměnnou prostředí GROQ_API_KEY.")
+            return
         self._settings.language = lang
         self._settings.sample_rate = self._rate_combo.currentData()
         self._settings.max_recording_seconds = self._max_rec_spin.value()

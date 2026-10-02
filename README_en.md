@@ -45,20 +45,22 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 Testted on Python 3.11.
 
 ```bash
-pip install groq PySide6 pynput
+pip install groq keyring PySide6 pynput
 # or, if you have pyproject.toml:
 pip install -e .
 ```
 
 ### Groq API key
 
-Sign up at [console.groq.com](https://console.groq.com) (free tier available) and export your key:
+Sign up at [console.groq.com](https://console.groq.com) (free tier available). On first start the app reports that the key is missing. Paste it into *Settings → API klíč*.
+The key is stored in the system keyring (GNOME Keyring / KWallet), not in a file on disk. Without the GUI:
 
 ```bash
-export GROQ_API_KEY="your_key_here"
+keyring set voice_to_text groq_api_key
 ```
 
-Add it to your `~/.bashrc` or `~/.zshrc` to make it permanent.
+The `export GROQ_API_KEY="your_key_here"` environment variable still works as a fallback, but the keyring takes precedence.
+A key stored in `settings.json` by older versions is moved to the keyring automatically on start.
 
 ---
 
@@ -175,9 +177,10 @@ arecord test.wav    # Test recording manually
 **Paste doesn't work in some apps**
 Some applications (e.g. terminals) block simulated input. Use the Copy button in the history window instead.
 
-**`GROQ_API_KEY` not found**
+**API key not found**
 ```bash
-echo $GROQ_API_KEY   # Should print your key
+keyring get voice_to_text groq_api_key   # key in the keyring
+echo $GROQ_API_KEY                       # env variable fallback
 ```
 
 **Tray icon doesn't appear**

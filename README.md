@@ -48,20 +48,22 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 Testováno na Python 3.11.
 
 ```bash
-pip install groq PySide6 pynput
+pip install groq keyring PySide6 pynput
 # nebo přes pyproject.toml:
 pip install -e .
 ```
 
 ### API klíč pro Groq
 
-Zaregistrujte se na [console.groq.com](https://console.groq.com) (k dispozici je bezplatný tarif) a exportujte klíč:
+Zaregistrujte se na [console.groq.com](https://console.groq.com) (k dispozici je bezplatný tarif). Po prvním spuštění aplikace upozorní, že klíč chybí. Vložte ho v *Nastavení → API klíč*.
+Klíč se uloží do systémové klíčenky (GNOME Keyring / KWallet), ne do souboru na disku. Bez GUI ho uložíte příkazem:
 
 ```bash
-export GROQ_API_KEY="váš_klíč"
+keyring set voice_to_text groq_api_key
 ```
 
-Pro trvalé nastavení přidejte řádek do `~/.bashrc` nebo `~/.zshrc`.
+Jako záloha funguje i proměnná prostředí `export GROQ_API_KEY="váš_klíč"`, klíč z klíčenky má ale přednost.
+Klíč ze starších verzí, který byl uložený v `settings.json`, se při spuštění automaticky přesune do klíčenky.
 
 ---
 
@@ -179,9 +181,10 @@ arecord test.wav    # Otestuje nahrávání ručně
 **Vkládání nefunguje v některých aplikacích**  
 Některé aplikace (např. terminály) blokují simulovaný vstup. Místo toho použijte tlačítko **Kopírovat** v okně s historií.
 
-**`GROQ_API_KEY` nenalezen**
+**API klíč nenalezen**
 ```bash
-echo $GROQ_API_KEY   # Mělo by vypsat váš klíč
+keyring get voice_to_text groq_api_key   # klíč v klíčence
+echo $GROQ_API_KEY                       # záloha přes env proměnnou
 ```
 
 **Ikona v systray se nezobrazuje**  

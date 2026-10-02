@@ -98,6 +98,9 @@ terminal (or a new terminator window if none is active) and waits for Enter (`gi
 shortcut in `xdotool` syntax (`terminal = ! ctrl+grave`) – handy for shortcuts that can't be
 typed on some layouts. The transcript is fuzzy-matched against the
 phrases and the closest one's command runs; with no match only a notification is shown.
+Terminal commands (`@`, `>`) run in an interactive bash after `~/.bashrc` is loaded, so aliases and
+`mamba activate` / `conda activate` work (`tomotree = @ cd ~/work/tomotree && mamba activate tomotree`).
+The built-in command **"ukaž nápovědu"** (show help) opens a table of all voice commands with an explanation of the prefixes.
 
 After the recording stops, the app:
 1. Normalizes audio volume via `ffmpeg` and converts to Opus format which is

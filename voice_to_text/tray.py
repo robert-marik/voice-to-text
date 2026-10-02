@@ -8,14 +8,16 @@ import time
 
 from PySide6.QtCore import QObject, Qt, Signal, Slot
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
-from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
+from PySide6.QtWidgets import (
+    QApplication, QDialog, QLabel, QMenu, QSystemTrayIcon, QTableWidget, QTableWidgetItem, QVBoxLayout,
+)
 
 from pynput import keyboard as kb
 
 from .audio import AudioRecorder
 from .clipboard import ClipboardPaster
 from .commands import match_command, prefill_in_terminal, run_command
-from .config import APP_DATA_DIR, HOLD_SECONDS
+from .config import APP_DATA_DIR, HELP_PHRASE, HOLD_SECONDS
 from .history import TranscriptionEntry, TranscriptionHistory
 from .logger import Logger
 from .music import MusicController
@@ -40,6 +42,7 @@ class AppController(QObject):
 
     _state_sig = Signal(str)
     _notify_sig = Signal(str, str)   # title, message – pro tray notifikace z vláken
+    _help_sig = Signal()
 
     def __init__(self, app: QApplication):
         super().__init__()
@@ -78,6 +81,7 @@ class AppController(QObject):
         self._state_sig.connect(self._update_tray_icon)
         self._state_sig.connect(self._window.state_changed)
         self._notify_sig.connect(self._show_notification)
+        self._help_sig.connect(self._show_help)
 
         self._listener = kb.Listener(on_press=self._on_key_press, on_release=self._on_key_release)
         self._listener.daemon = True
@@ -144,6 +148,33 @@ class AppController(QObject):
         """Zobrazí bublinu v system tray (volatelné z Qt vlákna)."""
         self._tray.showMessage(title, message, QSystemTrayIcon.MessageIcon.Information, 4000)
 
+    @Slot()
+    def _show_help(self) -> None:
+        cmds = self.settings.voice_commands
+        dlg = QDialog()
+        dlg.setWindowTitle("Hlasové příkazy")
+        table = QTableWidget(len(cmds), 2, dlg)
+        table.setHorizontalHeaderLabels(["Fráze", "Příkaz"])
+        table.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
+        table.verticalHeader().hide()
+        for row, (phrase, cmd) in enumerate(cmds.items()):
+            table.setItem(row, 0, QTableWidgetItem(phrase))
+            table.setItem(row, 1, QTableWidgetItem(cmd))
+        table.resizeColumnsToContents()
+        table.horizontalHeader().setStretchLastSection(True)
+        legend = QLabel(
+            "<b>bez značky</b> – spustí se na pozadí<br>"
+            "<b>@</b> – spustí se v novém terminálu, který zůstane otevřený<br>"
+            "<b>&gt;</b> – jen se vypíše do aktivního (nebo nového) terminálu, Enter zmáčknete sami<br>"
+            "<b>!</b> – pošle klávesovou zkratku (např. <tt>ctrl+grave</tt>)"
+        )
+        legend.setWordWrap(True)
+        layout = QVBoxLayout(dlg)
+        layout.addWidget(legend)
+        layout.addWidget(table)
+        dlg.resize(1000, 400)
+        dlg.exec()
+
     def _notify(self, title: str, message: str) -> None:
         """Thread-safe odeslání notifikace přes signál."""
         self._notify_sig.emit(title, message)
@@ -189,7 +220,10 @@ class AppController(QObject):
             self.music.resume()
 
     def _run_voice_command(self, text: str) -> str:
-        cmd = match_command(text, self.settings.voice_commands)
+        cmd = match_command(text, {HELP_PHRASE: HELP_PHRASE, **self.settings.voice_commands})
+        if cmd == HELP_PHRASE:
+            self._help_sig.emit()
+            return ""
         if cmd is None:
             self.logger.log(f"Prikaz nerozpoznan: {text}")
             self._notify("Voice to Text", f"Příkaz nerozpoznán: {text}")

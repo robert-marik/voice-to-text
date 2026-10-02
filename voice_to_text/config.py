@@ -3,9 +3,10 @@
 import os
 
 MAX_RECORDING_SECONDS = 120
-# Terminál pro příkazy s prefixem "@"; za něj se připojí ["bash", "-c", "<příkaz>; exec bash"].
+# Terminál pro příkazy s prefixem "@"; za něj se připojí ["bash", "-c", ...].
 TERMINAL_CMD = ["terminator", "-x"]
 HOLD_SECONDS = 0.5   # držení 2. stisku Ctrl déle než toto = hlasový příkaz
+HELP_PHRASE = "ukaž nápovědu"   # vestavěný hlasový příkaz: vypíše seznam příkazů
 DEFAULT_SAMPLE_RATE = 44100
 DEFAULT_LANGUAGE = "cs"
 DEFAULT_TARGET_LANGUAGE = "en"

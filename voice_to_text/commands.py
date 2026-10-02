@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import difflib
 import re
+import shlex
 import subprocess
+import tempfile
 
 from .config import TERMINAL_CMD
 
@@ -22,9 +24,7 @@ def match_command(text: str, commands: dict[str, str], cutoff: float = 0.6) -> s
 
 def prefill_in_terminal(cmd: str) -> None:
     """Otevře nový terminál s předvyplněným příkazem; spustí se až po Enteru, okno zůstane otevřené."""
-    # Příkaz jde jako $0, takže ho není třeba escapovat.
-    script = 'read -e -i "$0" -p "$ " c; eval "$c"; exec bash'
-    _popen(TERMINAL_CMD + ["bash", "-c", script, cmd])
+    _in_terminal(f'read -e -i {shlex.quote(cmd)} -p "$ " c; eval "$c"')
 
 
 def run_command(cmd: str) -> None:
@@ -35,8 +35,16 @@ def run_command(cmd: str) -> None:
     if cmd.startswith("!"):
         cmd = ["xdotool", "key", "--clearmodifiers", *cmd[1:].split()]
     elif cmd.startswith("@"):
-        cmd = TERMINAL_CMD + ["bash", "-c", f"{cmd[1:].strip()}; exec bash"]
+        return _in_terminal(cmd[1:].strip())
     _popen(cmd)
+
+
+def _in_terminal(script: str) -> None:
+    """Spustí script v interaktivním bashi v novém terminálu (po ~/.bashrc, kvůli mamba/conda, aliasům)."""
+    # Přes soubor, protože terminator -x spojí argumenty mezerami a rozbije uvozovky.
+    with tempfile.NamedTemporaryFile("w", suffix=".sh", delete=False) as f:
+        f.write(f'rm -f "$BASH_SOURCE"\n. ~/.bashrc\n{script}\n')
+    _popen(TERMINAL_CMD + ["bash", "--rcfile", f.name, "-i"])
 
 
 def _popen(cmd: str | list[str]) -> None:

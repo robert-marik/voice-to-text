@@ -101,6 +101,9 @@ terminálu (není-li aktivní, otevře nový terminator) a čeká na Enter (`sta
 klávesovou zkratku v syntaxi `xdotool` (`terminál = ! ctrl+grave`) – hodí se pro zkratky,
 které na české klávesnici nejdou zmáčknout. Přepis se fuzzy porovná s frázemi
 a spustí se příkaz nejpodobnější fráze; bez shody se jen zobrazí notifikace.
+Příkazy v terminálu (`@`, `>`) běží v interaktivním bashi po načtení `~/.bashrc`, takže fungují
+aliasy i `mamba activate` / `conda activate` (`tomotree = @ cd ~/work/tomotree && mamba activate tomotree`).
+Vestavěný příkaz **„ukaž nápovědu“** zobrazí tabulku všech hlasových příkazů s vysvětlením prefixů.
 
 Po zastavení nahrávání aplikace:
 1. Normalizuje hlasitost audia přes `ffmpeg`

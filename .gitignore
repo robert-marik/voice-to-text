@@ -1,3 +1,6 @@
 __pycache__/
 *.wav
 api.txt
+build/
+*.egg-info/
+*~

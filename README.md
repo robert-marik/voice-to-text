@@ -40,7 +40,7 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 | `arecord` (alsa-utils) | Nahrávání zvuku z mikrofonu |
 | `ffmpeg` | Normalizace hlasitosti a převod do Opus |
 | `xclip` | Zkopírování textu do schránky |
-| `xdotool` | Simulace Ctrl+V pro vložení do aktivního okna |
+| `xdotool`, `xprop` | Simulace Ctrl+V pro vložení do aktivního okna (jen X11) |
 | `playerctl` | Pozastavení/obnovení přehrávače médií |
 
 ### Python závislosti
@@ -48,10 +48,25 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 Testováno na Python 3.11.
 
 ```bash
-pip install groq PySide6 pynput
+pip install groq PySide6 pynput evdev
 # nebo přes pyproject.toml:
 pip install -e .
 ```
+
+### Wayland (výchozí na Ubuntu/GNOME)
+
+Pod Waylandem nelze klávesy hlídat ani simulovat přes X11, aplikace proto čte klávesnici
+z `/dev/input` a vkládá text virtuální klávesnicí (`/dev/uinput`, Shift+Insert). Jednorázově:
+
+```bash
+sudo usermod -aG input $USER
+sudo cp udev/70-voice-to-text-uinput.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=uinput
+# pak se odhlaste a znovu přihlaste
+```
+
+`xdotool` a `xprop` pod Waylandem potřeba nejsou. Backend lze vynutit proměnnou
+`VTT_INPUT_BACKEND=evdev` nebo `pynput`. Bez přístupu k `/dev/uinput` zůstane text ve schránce.
 
 ### API klíč pro Groq
 
@@ -98,7 +113,7 @@ Po zastavení nahrávání aplikace:
 2. Odešle audio do Groq Whisper k přepisu
 3. Volitelně opraví pravopis a gramatiku pomocí LLM
 4. Volitelně přeloží text do angličtiny
-5. Vloží výsledek do aktivního okna přes `xdotool`
+5. Vloží výsledek do aktivního okna (X11: `xdotool`, Wayland: virtuální klávesnice Shift+Insert)
 
 ---
 
@@ -131,7 +146,8 @@ voice_to_text/
     ├── logger.py                  # Časově značkovaný logger
     ├── audio.py                   # Nahrávání (arecord) + normalizace (ffmpeg)
     ├── transcriber.py             # Groq Whisper, LLM korekce a překlad
-    ├── clipboard.py               # Kopírování (xclip) + vkládání (xdotool)
+    ├── clipboard.py               # Kopírování (xclip) + vkládání (xdotool / uinput)
+    ├── hotkey.py                  # Sledování Ctrl (pynput / evdev)
     ├── music.py                   # Ovládání přehrávače (playerctl)
     ├── tray.py                    # AppController — QSystemTrayIcon + klávesnice
     │

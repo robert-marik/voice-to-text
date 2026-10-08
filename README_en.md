@@ -37,7 +37,7 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 | `arecord` (alsa-utils) | Captures audio from microphone               |
 | `ffmpeg`               | Normalizes volume and converts to Opus       |
 | `xclip`                | Copies transcribed text to clipboard         |
-| `xdotool`              | Simulates Ctrl+V to paste into active window |
+| `xdotool`, `xprop`     | Simulates Ctrl+V to paste into active window (X11 only) |
 | `playerctl`            | Pauses/resumes media players                 |
 
 ### Python dependencies
@@ -45,10 +45,25 @@ sudo apt install alsa-utils ffmpeg xclip xdotool playerctl
 Testted on Python 3.11.
 
 ```bash
-pip install groq PySide6 pynput
+pip install groq PySide6 pynput evdev
 # or, if you have pyproject.toml:
 pip install -e .
 ```
+
+### Wayland (default on Ubuntu/GNOME)
+
+Under Wayland keys cannot be captured or simulated via X11, so the app reads the keyboard
+from `/dev/input` and pastes using a virtual keyboard (`/dev/uinput`, Shift+Insert). One-time setup:
+
+```bash
+sudo usermod -aG input $USER
+sudo cp udev/70-voice-to-text-uinput.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=uinput
+# then log out and back in
+```
+
+`xdotool` and `xprop` are not needed under Wayland. Force a backend with
+`VTT_INPUT_BACKEND=evdev` or `pynput`. Without `/dev/uinput` access the text stays in the clipboard.
 
 ### Groq API key
 
@@ -96,7 +111,7 @@ After the recording stops, the app:
 2. Sends the audio to Groq Whisper for transcription
 3. Optionally corrects spelling/grammar via LLM
 4. Optionally translates to English
-5. Pastes the result into your active window via `xdotool`
+5. Pastes the result into your active window (X11: `xdotool`, Wayland: virtual keyboard Shift+Insert)
 
 ---
 
@@ -129,7 +144,8 @@ voice_to_text/
     ├── logger.py                  # Timestamped logger
     ├── audio.py                   # arecord + ffmpeg normalization
     ├── transcriber.py             # Groq Whisper, LLM correction/translation
-    ├── clipboard.py               # xclip + xdotool paste
+    ├── clipboard.py               # xclip + paste (xdotool / uinput)
+    ├── hotkey.py                  # Ctrl listener (pynput / evdev)
     ├── music.py                   # playerctl pause/resume
     ├── tray.py                    # AppController: QSystemTrayIcon + keyboard
     │

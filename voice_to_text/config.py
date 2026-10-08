@@ -14,7 +14,18 @@ REPORT_PATH = os.path.join(APP_DATA_DIR, "last_transcription.txt")
 WHISPER_MODEL = "whisper-large-v3-turbo"
 LLM_MODEL = "llama-3.3-70b-versatile"
 
-REQUIRED_SYSTEM_TOOLS = ["aplay", "arecord", "ffmpeg", "xclip", "xdotool", "xprop", "playerctl"]
+
+def use_evdev_input() -> bool:
+    """Wayland: klávesnici čteme i simulujeme přes /dev/input (evdev/uinput) místo X11."""
+    backend = os.environ.get("VTT_INPUT_BACKEND", "").lower()
+    if backend:
+        return backend == "evdev"
+    return os.environ.get("XDG_SESSION_TYPE", "").lower() == "wayland"
+
+
+REQUIRED_SYSTEM_TOOLS = ["aplay", "arecord", "ffmpeg", "xclip", "playerctl"]
+if not use_evdev_input():
+    REQUIRED_SYSTEM_TOOLS += ["xdotool", "xprop"]
 
 ICON_SIZE = (64, 64)
 ICON_COLORS = {

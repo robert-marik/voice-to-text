@@ -10,11 +10,10 @@ from PySide6.QtCore import QObject, Qt, Signal, Slot
 from PySide6.QtGui import QColor, QIcon, QPainter, QPixmap
 from PySide6.QtWidgets import QApplication, QMenu, QSystemTrayIcon
 
-from pynput import keyboard as kb
-
 from .audio import AudioRecorder
 from .clipboard import ClipboardPaster
 from .config import APP_DATA_DIR
+from .hotkey import CtrlListener, HotkeyUnavailable
 from .history import TranscriptionEntry, TranscriptionHistory
 from .logger import Logger
 from .music import MusicController
@@ -76,9 +75,13 @@ class AppController(QObject):
         self._state_sig.connect(self._window.state_changed)
         self._notify_sig.connect(self._show_notification)
 
-        self._listener = kb.Listener(on_press=self._on_key_press)
-        self._listener.daemon = True
-        self._listener.start()
+        self._listener = CtrlListener(self._on_ctrl)
+        try:
+            self._listener.start()
+            self.logger.log(f"Klavesnice sledovana pres {self._listener.backend}.")
+        except HotkeyUnavailable as exc:
+            self.logger.log(f"Klavesova zkratka nedostupna: {exc}")
+            self._show_notification("Voice to Text – 2× Ctrl nefunguje", str(exc))
 
         self.logger.log("Aplikace spustena. Stiskni 2x Ctrl pro start/stop nahravani.")
         self.logger.log(f"Max delka nahravani: {self.settings.max_recording_seconds}s.")
@@ -147,9 +150,7 @@ class AppController(QObject):
 
     # ── Klávesnice ─────────────────────────────────────────────────────
 
-    def _on_key_press(self, key) -> None:
-        if key not in (kb.Key.ctrl, kb.Key.ctrl_l, kb.Key.ctrl_r):
-            return
+    def _on_ctrl(self) -> None:
         now = time.time()
         with self._lock:
             diff = now - self._last_ctrl
